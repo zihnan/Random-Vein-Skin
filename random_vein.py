@@ -10,10 +10,11 @@ bf = expand(skin, bottom_margin=1, left_margin=1)
 br = expand(skin, right_margin=1, bottom_margin=1)
 ex = expand(skin, margin=1)
 
-tfc = conv_2d(tf, skin.shape, top_margin=1, left_margin=1, mask=np.array([[1,1],[1,1]]))
-trc = conv_2d(tr, skin.shape, top_margin=1, right_margin=1, mask=np.array([[1,1],[1,1]]))
-bfc = conv_2d(bf, skin.shape, bottom_margin=1, left_margin=1, mask=np.array([[1,1],[1,1]]))
-brc = conv_2d(br, skin.shape, right_margin=1, bottom_margin=1, mask=np.array([[1,1],[1,1]]))
+mask = np.array([[1, 1], [1, 1]])
+tfc = conv_2d(tf, skin.shape, top_margin=1, left_margin=1, mask=mask)
+trc = conv_2d(tr, skin.shape, top_margin=1, right_margin=1, mask=mask)
+bfc = conv_2d(bf, skin.shape, bottom_margin=1, left_margin=1, mask=mask)
+brc = conv_2d(br, skin.shape, right_margin=1, bottom_margin=1, mask=mask)
 exc = conv_2d(ex, skin.shape)
 
 '''
@@ -54,12 +55,55 @@ def random_vein_lines():
     cross2 = np.reshape(cross2, (-1,))
     result = np.zeros(skin.shape)
     for i in range(skin.shape[0]):
-         for j in range(skin.shape[1]):
-             position_y = offset + j
-             position_x = offset + i
-             a = expand_relu_skin[position_x - 1:position_x +2,position_y - 1: position_y + 2]
-             a = np.reshape(a, (-1,))
-             temp1 = relu(np.dot(a, cross1.T))
-             temp2 = relu(np.dot(a, cross2.T))
-             result[i, j] = np.logical_xor(temp1 > 0,temp2 > 0)
+        for j in range(skin.shape[1]):
+            position_y = offset + j
+            position_x = offset + i
+            a = expand_relu_skin[position_x - 1:position_x +2,position_y - 1: position_y + 2]
+            a = np.reshape(a, (-1,))
+            temp1 = relu(np.dot(a, cross1.T))
+            temp2 = relu(np.dot(a, cross2.T))
+            result[i, j] = np.logical_xor(temp1 > 0,temp2 > 0)
+    return result, skin
+    
+def random_vein_lines2():
+    skin = np.random.randn(4,12)
+    expanded_skin = expand(skin, margin=1)
+    mask1 = np.array([[1, 0, 1],
+                        [0, 1, 0],
+                        [1, 0, 1]])
+    mask2 = np.array([[0, 1, 0],
+                        [1, 1, 1],
+                        [0, 1, 0]])
+    result = np.zeros(skin.shape)
+    ex1 = conv_2d(expanded_skin, skin.shape, mask=mask1)
+    ex1 = relu(ex1)
+    ex2 = conv_2d(expanded_skin, skin.shape, mask=mask2)
+    ex2 = relu(ex2)
+    result = np.logical_xor(ex1, ex2)
+    return result, skin
+    
+def random_vein_lines3():
+    skin = np.random.randn(4,12)
+    expanded_skin = expand(skin, margin=1)
+    mask = np.array([[1, 1],
+                        [1, 1]])
+    result = np.zeros(skin.shape)
+    tf = expand(skin, top_margin=1, left_margin=1)
+    tr = expand(skin, top_margin=1, right_margin=1)
+    bf = expand(skin, bottom_margin=1, left_margin=1)
+    br = expand(skin, right_margin=1, bottom_margin=1)
+    
+    tfc = conv_2d(tf, skin.shape, top_margin=1, left_margin=1, mask=mask)
+    trc = conv_2d(tr, skin.shape, top_margin=1, right_margin=1, mask=mask)
+    bfc = conv_2d(bf, skin.shape, bottom_margin=1, left_margin=1, mask=mask)
+    brc = conv_2d(br, skin.shape, right_margin=1, bottom_margin=1, mask=mask)
+    
+    tfc = relu(tfc)
+    trc = relu(trc)
+    bfc = relu(bfc)
+    brc = relu(brc)
+    
+    temp1 = np.logical_xor(tfc, trc)
+    temp2 = np.logical_xor(bfc, brc)
+    result = np.logical_xor(temp1, temp2)
     return result, skin
